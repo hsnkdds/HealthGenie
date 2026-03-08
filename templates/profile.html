@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Health Genie - Profile</title>
+
+<style>
+
+body{
+    margin:0;
+    font-family:Arial, Helvetica, sans-serif;
+}
+
+/* Sidebar */
+.sidebar{
+    position:fixed;
+    width:220px;
+    height:100vh;
+    background:#2c3e50;
+    padding-top:20px;
+}
+
+.sidebar h2{
+    color:white;
+    text-align:center;
+}
+
+.sidebar a{
+    display:block;
+    color:white;
+    padding:12px;
+    text-decoration:none;
+}
+
+.sidebar a:hover{
+    background:#1abc9c;
+}
+
+/* Main Content */
+.main{
+    margin-left:220px;
+    padding:30px;
+}
+
+/* Profile Card */
+.profile-card{
+    background:#f10909;
+    padding:20px;
+    border-radius:10px;
+    width:400px;
+}
+
+.stat-box{
+    background:white;
+    padding:15px;
+    margin-top:10px;
+    border-radius:8px;
+    box-shadow:0px 2px 5px rgba(0,0,0,0.2);
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+    <h2>Health Genie</h2>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="profile.html">Profile</a>
+    <a href="symptoms.html">Check Symptoms</a>
+    <a href="results.html">Results</a>
+    <a href="login.html">Logout</a>
+</div>
+
+<!-- Main Content -->
+<div class="main">
+
+<h1>User Profile</h1>
+
+<div class="profile-card">
+
+<h2 id="username">Username: Guest</h2>
+
+<div class="stat-box">
+<strong>Total Chats:</strong>
+<p id="chatCount">12</p>
+</div>
+
+<div class="stat-box">
+<strong>Common Symptoms Reported:</strong>
+<ul id="symptoms">
+<li>Headache</li>
+<li>Fever</li>
+<li>Cough</li>
+<li>Fatigue</li>
+</ul>
+</div>
+
+</div>
+
+</div>
+
+</body>
+</html>

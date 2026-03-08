@@ -1,0 +1,66 @@
+@app.route("/symptom", methods=["POST"])
+def symptom():
+    user_message = request.json["message"].lower()
+
+    severity = "mild"
+
+    if "chest pain" in user_message or "breathing" in user_message:
+        severity = "high"
+    elif "fever" in user_message and "chills" in user_message:
+        severity = "moderate"
+
+    health_prompt = f"""
+You are HealthGenie, an AI health assistant.
+
+User symptoms: {user_message}
+Detected severity: {severity}
+
+Respond with simple health advice.
+Keep it under 3 sentences.
+"""
+
+    payload = {
+        "model": "phi",
+        "prompt": health_prompt,
+        "stream": False
+    }
+
+    <h2>Medical Symptom Assessment</h2>
+
+<p>
+Please select the symptoms you are currently experiencing.
+This tool provides a preliminary health assessment and is not a medical diagnosis.
+</p>
+
+<form method="POST" action="/predict">
+
+{% for category, symptom_list in symptoms.items() %}
+
+<h3>{{ category }} Symptoms</h3>
+
+{% for symptom in symptom_list %}
+<label>
+<input type="checkbox" name="symptoms" value="{{ symptom }}">
+{{ symptom }}
+</label><br>
+{% endfor %}
+
+<br>
+
+{% endfor %}
+
+<button type="submit">Analyze Symptoms</button>
+
+</form>
+
+{% if prediction %}
+<h3>Possible Condition:</h3>
+<p>{{ prediction }}</p>
+{% endif %}
+
+    response = requests.post(OLLAMA_URL, json=payload)
+    ai_reply = response.json()["response"]
+
+    final_reply = f"Severity level: {severity.upper()}\\n\\n{ai_reply}"
+
+    return jsonify({"reply": final_reply})

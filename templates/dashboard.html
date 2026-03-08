@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="bg-gradient-to-br from-black via-gray-900 to-black text-white min-h-screen flex">
+
+<!-- SIDEBAR -->
+<div class="w-64 bg-white/5 backdrop-blur-xl border-r border-cyan-500/30 p-6 flex flex-col justify-between">
+    
+    <div>
+        <h1 class="text-2xl font-bold text-cyan-400 drop-shadow-[0_0_15px_cyan]">
+            HealthGenie
+        </h1>
+
+        <nav class="mt-10 space-y-4">
+            <a href="/dashboard" class="block px-4 py-2 rounded-lg bg-cyan-500/20">
+                🧠 Dashboard
+             {% if session.get("user_id") %}
+    {% if session.get("is_admin") == 1 %}
+    <a href="/admin" class="block px-4 py-2 rounded-lg hover:bg-cyan-500/20">
+        ⚙ Admin Panel
+    </a>
+    {% endif %}
+{% endif %}
+</a>
+            </a>
+            <a href="/chat" class="block px-4 py-2 rounded-lg hover:bg-cyan-500/20">
+                🤖 AI Chat
+            </a>
+        </nav>
+    </div>
+
+    <a href="/logout" class="text-red-400 hover:text-red-500">
+        Logout
+    </a>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="flex-1 p-10">
+
+<h2 class="text-3xl font-bold text-cyan-400 drop-shadow-[0_0_10px_cyan]">
+    Neural Health Console
+</h2>
+
+<div class="grid grid-cols-4 gap-6 mt-10">
+
+    <!-- Total Chats -->
+    <div class="bg-white/10 backdrop-blur-lg p-6 rounded-2xl border border-cyan-500/20">
+        <h3 class="text-cyan-300">📊 Total Chats</h3>
+        <p id="chatCounter"
+           class="text-4xl mt-4 font-bold text-cyan-400">
+           0
+        </p>
+    </div>
+
+    <!-- Last Active -->
+    <div class="bg-white/10 backdrop-blur-lg p-6 rounded-2xl border border-cyan-500/20">
+        <h3 class="text-cyan-300">🕒 Last Active</h3>
+        <p class="text-xl mt-4 text-gray-300">
+            {{ last_active_time }}
+        </p>
+    </div>
+
+    <!-- Notifications -->
+    <div class="bg-white/10 backdrop-blur-lg p-6 rounded-2xl border border-cyan-500/20">
+        <h3 class="text-cyan-300">🔔 Notifications</h3>
+        <p class="mt-4 text-yellow-400">
+            {% if total_chats > 15 %}
+                High usage detected
+            {% else %}
+                System normal
+            {% endif %}
+        </p>
+    </div>
+
+    <!-- AI Health Score -->
+    <div class="bg-white/10 backdrop-blur-lg p-6 rounded-2xl border border-cyan-500/20">
+        <h3 class="text-cyan-300">🧠 AI Health</h3>
+        <p class="text-3xl mt-4 font-bold text-green-400">
+            {{ ai_health }}%
+        </p>
+    </div>
+
+</div>
+
+
+<!-- HEALTH REPORT BOX -->
+<div class="bg-white/5 backdrop-blur-xl border border-cyan-500/30 rounded-2xl p-6 shadow-[0_0_25px_rgba(0,255,255,0.15)]">
+
+    <h2 class="text-xl font-bold text-cyan-400 mb-4">
+        🧾 Health Report
+    </h2>
+
+    <!-- Health Score -->
+    <div class="mb-4">
+        <p class="text-gray-300">Health Score</p>
+        <div class="w-full bg-gray-800 rounded-full h-4 mt-2">
+            <div class="bg-cyan-400 h-4 rounded-full"
+                 style="width: {{ health_score }}%">
+            </div>
+        </div>
+        <p class="text-cyan-300 mt-1">{{ health_score }}/100</p>
+    </div>
+
+    <!-- Possible Conditions -->
+    <div class="mb-4">
+        <p class="text-gray-300">Possible Conditions</p>
+        <ul class="list-disc list-inside text-white mt-2">
+            {% for condition in conditions %}
+            <li>{{ condition }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <!-- AI Recommendation -->
+    <div>
+        <p class="text-gray-300">AI Recommendation</p>
+        <p class="text-white mt-2 whitespace-pre-line">
+            {{ recommendation }}
+        </p>
+    </div>
+
+</div>
+
+
+<!-- Chart Section -->
+<div class="mt-12 bg-white/10 backdrop-blur-lg p-8 rounded-2xl border border-cyan-500/20">
+    <h3 class="text-cyan-300 mb-6 text-xl">📊 Weekly Chat Activity</h3>
+    <canvas id="chatChart"></canvas>
+</div>
+<h3>Generate Medical Report</h3>
+
+<form action="/generate_report" method="post">
+    <input type="text" name="symptoms" placeholder="Enter your symptoms">
+    <button type="submit">Generate Report</button>
+</form>
+</div>
+
+<!-- SCRIPTS -->
+<script>
+
+// Animated Counter
+let finalValue = {{ total_chats }};
+let counter = document.getElementById("chatCounter");
+let current = 0;
+let increment = Math.ceil(finalValue / 40);
+
+function animateCounter() {
+    if (current < finalValue) {
+        current += increment;
+        if (current > finalValue) current = finalValue;
+        counter.innerText = current;
+        setTimeout(animateCounter, 30);
+    }
+}
+animateCounter();
+
+// Chart.js
+const ctx = document.getElementById('chatChart');
+
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+        datasets: [{
+            label: 'Chats',
+            data: {{ chart_data }},
+            borderColor: 'cyan',
+            backgroundColor: 'rgba(0,255,255,0.1)',
+            tension: 0.4
+        }]
+    },
+    options: {
+        plugins: {
+            legend: { labels: { color: 'white' } }
+        },
+        scales: {
+            x: { ticks: { color: 'white' } },
+            y: { ticks: { color: 'white' } }
+        }
+    }
+});
+
+</script>
+
+
+<style>
+body {
+    opacity: 0;
+    transition: opacity 0.4s ease-in-out;
+}
+body.loaded {
+    opacity: 1;
+}
+</style>
+
+<script>
+window.addEventListener("load", function() {
+    document.body.classList.add("loaded");
+});
+</script>
+
+
+</body>
+</html>
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>Health Genie Dashboard</title>
+
+<style>
+
+body{
+    margin:0;
+    font-family:Arial;
+    background:linear-gradient(135deg,#0f172a,#020617);
+    color:white;
+}
+
+/* Top bar */
+.topbar{
+    width:100%;
+    height:60px;
+    background:#020617;
+    border-bottom:1px solid #06b6d4;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 25px;
+}
+
+/* Title */
+.topbar h2{
+    color:#22d3ee;
+    text-shadow:0 0 10px cyan;
+}
+
+/* Profile picture */
+.profile-pic{
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    cursor:pointer;
+    border:2px solid #22d3ee;
+    box-shadow:0 0 10px cyan;
+}
+
+/* Dashboard area */
+.main{
+    padding:40px;
+}
+
+/* Welcome text */
+.main h1{
+    color:#22d3ee;
+}
+
+/* Profile popup */
+.profile-box{
+    position:fixed;
+    top:80px;
+    right:20px;
+    width:260px;
+    background:#020617;
+    border:1px solid #06b6d4;
+    border-radius:12px;
+    box-shadow:0 0 20px rgba(0,255,255,0.4);
+    padding:20px;
+    display:none;
+}
+
+/* Stats box */
+.stat{
+    background:#0f172a;
+    padding:12px;
+    margin-top:12px;
+    border-radius:8px;
+    border:1px solid rgba(34,211,238,0.3);
+}
+
+/* List style */
+ul{
+    padding-left:18px;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+
+<h2>HealthGenie</h2>
+
+<img src="https://i.imgur.com/6VBx3io.png"
+class="profile-pic"
+onclick="toggleProfile()">
+
+</div>
+
+
+<!-- DASHBOARD -->
+<div class="main">
+
+<h1>Welcome to Health Genie</h1>
+<p>AI powered health assistant dashboard.</p>
+
+</div>
+
+
+<!-- PROFILE POPUP -->
+<div class="profile-box" id="profileBox">
+
+<h3 id="username">👤 Username: Hasan</h3>
+
+<div class="stat">
+<strong>Total Chats</strong>
+<p id="chatCount">15</p>
+</div>
+
+<div class="stat">
+<strong>Common Symptoms</strong>
+<ul id="symptoms">
+<li>Fever</li>
+<li>Headache</li>
+<li>Cough</li>
+</ul>
+</div>
+
+</div>
+
+
+<script>
+
+function toggleProfile(){
+
+var box = document.getElementById("profileBox");
+
+if(box.style.display === "block"){
+    box.style.display = "none";
+}else{
+    box.style.display = "block";
+}
+
+}
+
+</script>
+
+</body>
+</html>

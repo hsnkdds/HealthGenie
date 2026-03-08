@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>HealthGenie AI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body {
+            background: radial-gradient(circle at 20% 20%, #0f2027, #203a43, #2c5364);
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+        }
+
+        .neon-text {
+            text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+        }
+
+        .glow-btn {
+            box-shadow: 0 0 15px #00ffff;
+        }
+    </style>
+</head>
+
+<body class="text-white min-h-screen">
+
+<!-- NAVBAR -->
+<nav class="flex justify-between items-center p-6">
+    <h1 class="text-2xl font-bold neon-text">🤖 HealthGenie AI</h1>
+    <div class="space-x-4">
+        <button onclick="openLogin()" class="hover:text-cyan-400 transition">
+            Login
+        </button>
+        <button onclick="openRegister()" 
+            class="bg-cyan-500 px-4 py-2 rounded-lg glow-btn hover:bg-cyan-400 transition">
+            Register
+        </button>
+    </div>
+</nav>
+
+<!-- HERO -->
+<section class="text-center mt-24 px-6">
+    <h2 class="text-5xl font-bold mb-6 neon-text">
+        Intelligent Health Intelligence
+    </h2>
+
+    <p class="text-lg text-gray-300 mb-8 max-w-xl mx-auto">
+        Next-generation AI health assistant powered by smart rule systems 
+        and real-time symptom analysis.
+    </p>
+
+    <button onclick="openRegister()" 
+        class="bg-cyan-500 px-8 py-4 rounded-xl text-lg glow-btn hover:bg-cyan-400 transition">
+        Initialize System
+    </button>
+</section>
+
+<!-- FEATURES -->
+<section class="grid md:grid-cols-3 gap-8 px-10 mt-24 mb-20">
+    <div class="glass p-6 rounded-xl text-center">
+        <h3 class="text-xl font-bold mb-3 neon-text">🧠 AI Core</h3>
+        <p class="text-gray-300">Hybrid intelligence engine with adaptive learning.</p>
+    </div>
+
+    <div class="glass p-6 rounded-xl text-center">
+        <h3 class="text-xl font-bold mb-3 neon-text">📊 Neural Tracking</h3>
+        <p class="text-gray-300">Advanced symptom memory & pattern detection.</p>
+    </div>
+
+    <div class="glass p-6 rounded-xl text-center">
+        <h3 class="text-xl font-bold mb-3 neon-text">⚠️ Risk Engine</h3>
+        <p class="text-gray-300">Real-time emergency severity classification.</p>
+    </div>
+</section>
+
+<!-- LOGIN MODAL -->
+<div id="loginModal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center">
+    <div class="glass p-8 rounded-xl w-96 relative">
+        <button onclick="closeLogin()" class="absolute top-2 right-3 text-xl">&times;</button>
+        <h2 class="text-2xl font-bold neon-text mb-4">System Access</h2>
+
+        <form method="POST" action="/login" class="space-y-4">
+            <input type="text" name="username" placeholder="Username"
+                class="w-full bg-black bg-opacity-30 border border-cyan-400 rounded-lg px-4 py-2 text-white">
+
+            <input type="password" name="password" placeholder="Password"
+                class="w-full bg-black bg-opacity-30 border border-cyan-400 rounded-lg px-4 py-2 text-white">
+
+            <button class="w-full bg-cyan-500 py-2 rounded-lg glow-btn hover:bg-cyan-400">
+                Login
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- REGISTER MODAL -->
+<div id="registerModal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center">
+    <div class="glass p-8 rounded-xl w-96 relative">
+        <button onclick="closeRegister()" class="absolute top-2 right-3 text-xl">&times;</button>
+        <h2 class="text-2xl font-bold neon-text mb-4">Create Account</h2>
+
+        <form method="POST" action="/register" class="space-y-4">
+            <input type="text" name="username" placeholder="Username"
+                class="w-full bg-black bg-opacity-30 border border-cyan-400 rounded-lg px-4 py-2 text-white">
+
+            <input type="password" name="password" placeholder="Password"
+                class="w-full bg-black bg-opacity-30 border border-cyan-400 rounded-lg px-4 py-2 text-white">
+
+            <button class="w-full bg-cyan-500 py-2 rounded-lg glow-btn hover:bg-cyan-400">
+                Register
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+function openLogin() {
+    document.getElementById("loginModal").classList.remove("hidden");
+}
+function closeLogin() {
+    document.getElementById("loginModal").classList.add("hidden");
+}
+function openRegister() {
+    document.getElementById("registerModal").classList.remove("hidden");
+}
+function closeRegister() {
+    document.getElementById("registerModal").classList.add("hidden");
+}
+</script>
+
+
+<style>
+body {
+    opacity: 0;
+    transition: opacity 0.4s ease-in-out;
+}
+body.loaded {
+    opacity: 1;
+}
+</style>
+
+<script>
+window.addEventListener("load", function() {
+    document.body.classList.add("loaded");
+});
+</script>
+
+
+</body>
+</html>
