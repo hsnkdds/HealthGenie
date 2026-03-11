@@ -5,6 +5,7 @@ import webbrowser
 import threading
 from report_generator import generate_report
 from symptom_rules import check_symptoms
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.secret_key = "neon_healthgenie_secret"
@@ -22,20 +23,22 @@ def init_db():
     cursor = conn.cursor()
 
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL,
-        is_admin INTEGER DEFAULT 0
-    )
-    """)
-
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL,
+    age INTEGER,
+    gender TEXT,
+    is_admin INTEGER DEFAULT 0
+)
+""")
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS chat_messages (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER,
         sender TEXT,
-        message TEXT
+        message TEXT,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
     )
     """)
 
@@ -106,36 +109,43 @@ def index():
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
+
+        username = request.form.get("username")
+        password = request.form.get("password")
+        age = request.form.get("age")
+        gender = request.form.get("gender")
 
         conn = get_db()
         cursor = conn.cursor()
 
         is_admin = 0
-
         if username == "hsnkdds819" and password == "hsnkdds":
             is_admin = 1
 
         try:
+            hashed = generate_password_hash(password)
+
             cursor.execute(
-                "INSERT INTO users (username, password, is_admin) VALUES (?, ?, ?)",
-                (username, password, is_admin),
+                "INSERT INTO users (username, password, age, gender, is_admin) VALUES (?, ?, ?, ?, ?)",
+                (username, hashed, age, gender, is_admin),
             )
+
             conn.commit()
-        except:
+
+        except sqlite3.IntegrityError:
             conn.close()
-            return "Username already exists"
+            return "Username already exists. Try another one."
 
         conn.close()
         return redirect(url_for("login"))
 
     return render_template("register.html")
 
-
 @app.route("/login", methods=["GET", "POST"])
 def login():
+
     if request.method == "POST":
+
         username = request.form["username"]
         password = request.form["password"]
 
@@ -143,32 +153,37 @@ def login():
         cursor = conn.cursor()
 
         cursor.execute(
-            "SELECT * FROM users WHERE username=? AND password=?",
-            (username, password)
+            "SELECT * FROM users WHERE username=?",
+            (username,)
         )
 
         user = cursor.fetchone()
+
         conn.close()
 
-        if user:
+        if user and check_password_hash(user["password"], password):
+
             session["user_id"] = user["id"]
             session["username"] = user["username"]
             session["is_admin"] = user["is_admin"]
+
             return redirect(url_for("dashboard"))
+
         else:
-            return "Invalid login"
+            return "Invalid username or password"
 
     return render_template("login.html")
 
-
 @app.route("/dashboard")
 def dashboard():
+
     if "user_id" not in session:
         return redirect(url_for("login"))
 
     conn = get_db()
     cursor = conn.cursor()
 
+    # Total chats
     cursor.execute(
         "SELECT COUNT(*) FROM chat_messages WHERE user_id=?",
         (session["user_id"],)
@@ -177,7 +192,7 @@ def dashboard():
 
     last_active_time = "Recently Active"
 
-    # AI health score logic
+    # AI health score
     if total_chats > 20:
         ai_health = 100
     elif total_chats > 10:
@@ -187,15 +202,31 @@ def dashboard():
     else:
         ai_health = 50
 
-    chart_data = [2,4,1,6,3,5,total_chats]
+    # Weekly analytics
+    cursor.execute("""
+        SELECT strftime('%w', timestamp) as day, COUNT(*)
+        FROM chat_messages
+        WHERE user_id = ?
+        GROUP BY day
+    """, (session["user_id"],))
 
-    # 🧾 Report box data
-    conditions = [
-        "Flu",
-        "Common Cold"
-    ]
+    rows = cursor.fetchall()
 
-    recommendation = "Stay hydrated, get enough rest, and monitor symptoms. If symptoms persist or worsen, consult a healthcare professional."
+    chart_data = [0,0,0,0,0,0,0]
+
+    for row in rows:
+        day = int(row[0])
+        count = row[1]
+
+        # Convert Sun-Sat → Mon-Sun
+        if day == 0:
+            chart_data[6] = count
+        else:
+            chart_data[day-1] = count
+
+    conditions = ["Flu", "Common Cold"]
+
+    recommendation = "Stay hydrated, get enough rest, and monitor symptoms."
 
     conn.close()
 
@@ -207,8 +238,7 @@ def dashboard():
         last_active_time=last_active_time,
         chart_data=chart_data,
         conditions=conditions,
-        recommendation=recommendation,
-        
+        recommendation=recommendation
     )
 
 
@@ -278,20 +308,40 @@ def chat():
     return render_template("chat.html", messages=messages)
 
 #report
-@app.route("/generate_report", methods=["POST"])
-def generate_report_route():
+@app.route("/report", methods=["GET", "POST"])
+def report():
 
-    if "username" not in session:
+    if "user_id" not in session:
         return redirect(url_for("login"))
 
-    symptoms = request.form["symptoms"]
+    report = None
 
-    diseases = check_symptoms(symptoms)
-
-    report = generate_report(session["username"], symptoms, diseases)
+    if request.method == "POST":
+        symptoms = request.form["symptoms"]
+        diseases = check_symptoms(symptoms)
+        report = generate_report(session["username"], symptoms, diseases)
 
     return render_template("report.html", report=report)
+#PROFILE
 
+@app.route("/profile")
+def profile():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT username, age, gender FROM users WHERE id = ?",
+        (session["user_id"],)
+    )
+
+    user = cursor.fetchone()
+
+    conn.close()
+
+    return render_template("profile.html", user=user)
 
 @app.route("/admin")
 def admin_panel():
@@ -344,6 +394,41 @@ def delete_user(user_id):
     conn.close()
 
     return redirect(url_for("admin_panel"))
+
+
+@app.route("/emergency")
+def emergency():
+    return render_template("emergency.html")
+
+
+@app.route("/articles")
+def articles():
+    return render_template("articles.html")
+
+
+@app.route("/bmi", methods=["GET","POST"])
+def bmi():
+
+    bmi = None
+    category = None
+
+    if request.method == "POST":
+
+        weight = float(request.form["weight"])
+        height = float(request.form["height"]) / 100
+
+        bmi = round(weight / (height * height), 2)
+
+        if bmi < 18.5:
+            category = "Underweight"
+        elif bmi < 25:
+            category = "Normal"
+        elif bmi < 30:
+            category = "Overweight"
+        else:
+            category = "Obese"
+
+    return render_template("bmi.html", bmi=bmi, category=category)
 
 
 @app.route("/logout")
