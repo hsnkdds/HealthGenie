@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Chat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-black via-gray-900 to-black text-white min-h-screen flex">
+
+<!-- SIDEBAR -->
+<div class="w-64 bg-white/5 backdrop-blur-xl border-r border-cyan-500/30 p-6 flex flex-col justify-between">
+    
+    <div>
+        <h1 class="text-2xl font-bold text-cyan-400 drop-shadow-[0_0_15px_cyan]">
+            HealthGenie
+        </h1>
+
+        <nav class="mt-10 space-y-4">
+            <a href="/dashboard" class="block px-4 py-2 rounded-lg hover:bg-cyan-500/20">
+                🧠 Dashboard
+            </a>
+
+            <a href="/chat" class="block px-4 py-2 rounded-lg bg-cyan-500/20">
+                🤖 AI Chat
+            </a>
+        </nav>
+    </div>
+
+    <a href="/logout" class="text-red-400 hover:text-red-500">
+        Logout
+    </a>
+</div>
+
+<!-- MAIN CHAT AREA -->
+<div class="flex-1 flex flex-col">
+
+    <!-- MESSAGES -->
+   <div id="chatBox" class="flex-1 overflow-y-auto p-8 space-y-6">
+        {% for msg in messages %}
+            {% if msg.sender == "User" %}
+                <div class="text-right">
+                    <span class="inline-block bg-cyan-500 text-black px-5 py-3 rounded-xl shadow-[0_0_10px_cyan]">
+                        {{ msg.message }}
+                    </span>
+                </div>
+            {% else %}
+                <div class="text-left">
+<span class="ai-message inline-block bg-white/10 backdrop-blur-lg px-5 py-3 rounded-xl border border-cyan-500/20 shadow-[0_0_20px_rgba(0,255,255,0.2)] whitespace-pre-line">                        {{ msg.message }}
+                    </span>
+                </div>  
+            {% endif %}
+        {% endfor %}
+
+    </div>
+
+    <!-- INPUT -->
+    <form method="POST" class="p-6 border-t border-cyan-500/30 flex space-x-4">
+        <input type="text" name="message"
+               class="flex-1 p-4 bg-white/5 backdrop-blur-lg border border-cyan-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400"
+               placeholder="Describe symptoms..."
+               required>
+
+        <button type="submit"
+                class="px-8 bg-cyan-500 text-black rounded-xl font-bold hover:bg-cyan-400 shadow-[0_0_15px_cyan]">
+            Send
+        </button>
+    </form>
+
+</div>
+
+<!-- JAVASCRIPT -->
+<script>
+
+// Auto-scroll
+let chatBox = document.getElementById("chatBox");
+chatBox.scrollTop = chatBox.scrollHeight;
+
+// Typing effect for last AI message
+let messages = document.querySelectorAll(".ai-message");
+if (messages.length > 0) {
+    let last = messages[messages.length - 1];
+    let text = last.innerText;
+    last.innerText = "";
+    let i = 0;
+
+    function typeEffect() {
+        if (i < text.length) {
+            last.innerText += text.charAt(i);
+            i++;
+            setTimeout(typeEffect, 20);
+        }
+    }
+
+    typeEffect();
+}
+
+</script>
+
+<style>
+body {
+    opacity: 0;
+    transition: opacity 0.4s ease-in-out;
+}
+body.loaded {
+    opacity: 1;
+}
+</style>
+
+<script>
+window.addEventListener("load", function() {
+    document.body.classList.add("loaded");
+});
+</script>
+
+<script>
+function typeEffect(element, text, speed = 20) {
+    let i = 0;
+    element.innerHTML = "";
+    function typing() {
+        if (i < text.length) {
+            element.innerHTML += text.charAt(i);
+            i++;
+            setTimeout(typing, speed);
+        }
+    }
+    typing();
+}
+
+window.onload = function() {
+    const aiMessages = document.querySelectorAll(".ai-message");
+    aiMessages.forEach(msg => {
+        const text = msg.innerText;
+        typeEffect(msg, text);
+    });
+};
+</script>
+
+<script>
+window.onload = function() {
+    var chatBox = document.getElementById("chat-box");
+    chatBox.scrollTop = chatBox.scrollHeight;
+};
+</script>
+
+</body>
+</html>
